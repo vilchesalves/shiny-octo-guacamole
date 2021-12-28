@@ -8,11 +8,6 @@ pub struct PanelController {
     phys: u32,
 }
 
-#[derive(FromVariant)]
-struct Param {
-    d: GodotString,
-}
-
 #[methods]
 impl PanelController {
     fn new(_owner: &Panel) -> Self {
