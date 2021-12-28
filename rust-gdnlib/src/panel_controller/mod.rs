@@ -8,6 +8,11 @@ pub struct PanelController {
     phys: u32,
 }
 
+#[derive(FromVariant)]
+struct Param {
+    d: GodotString,
+}
+
 #[methods]
 impl PanelController {
     fn new(_owner: &Panel) -> Self {
@@ -17,6 +22,7 @@ impl PanelController {
     #[export]
     fn _ready(&self, owner: TRef<Panel>) {
         godot_print!("Instance PanelController ready");
+        owner.add_to_group("panelgroup", false);
 
         let b = owner.get_node("Button").expect("didnt get button");
         let b = unsafe { b.assume_safe() };
@@ -33,14 +39,30 @@ impl PanelController {
     }
 
     #[export]
-    fn _on_Button_pressed(&self, _owner: &Panel) {
-        let l = _owner.get_node("Label").expect("didn't get label");
+    fn _on_Button_pressed(&self, owner: &Panel) {
+        let l = owner.get_node("Label").expect("didn't get label");
         let l = unsafe { l.assume_safe() };
         let l = l.cast::<Label>().expect("couldnt cast");
 
         l.set_text("The button. Pressed!");
 
         godot_print!("button press");
+
+        let g = owner.get_tree().expect("couldnt get tree");
+        let g = unsafe { g.assume_safe() };
+        let g = g.cast::<SceneTree>().expect("couldnt cast");
+
+        godot_print!("{:#?}", g);
+        g.call_group(
+            "panelgroup",
+            "the_callback",
+            &[Variant::from_str("I'm the argument")],
+        );
+    }
+
+    #[export]
+    fn the_callback(&self, owner: &Panel, arg: GodotString) {
+        godot_print!("I'm the callback, {}", arg);
     }
 
     #[export]
