@@ -26,7 +26,7 @@ impl PanelController {
         b.connect(
             "pressed",
             owner,
-            "_on_Button_pressed",
+            "_on_button_pressed",
             VariantArray::new_shared(),
             0,
         )
@@ -34,7 +34,7 @@ impl PanelController {
     }
 
     #[export]
-    fn _on_Button_pressed(&self, owner: &Panel) {
+    fn _on_button_pressed(&self, owner: &Panel) {
         let l = owner.get_node("Label").expect("didn't get label");
         let l = unsafe { l.assume_safe() };
         let l = l.cast::<Label>().expect("couldnt cast");
