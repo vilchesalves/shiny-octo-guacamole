@@ -56,7 +56,7 @@ impl PanelController {
     }
 
     #[export]
-    fn the_callback(&self, owner: &Panel, arg: GodotString) {
+    fn the_callback(&self, _owner: &Panel, arg: GodotString) {
         godot_print!("I'm the callback, {}", arg);
     }
 
