@@ -1,0 +1,8 @@
+[gd_resource type="NativeScript" load_steps=2 format=2]
+
+[ext_resource path="res://rust-lib.gdnlib" type="GDNativeLibrary" id=1]
+
+[resource]
+resource_name = "PlayerController"
+class_name = "PlayerController"
+library = ExtResource( 1 )
