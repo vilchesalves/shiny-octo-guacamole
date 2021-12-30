@@ -1,2 +1,9 @@
+# mac
 .DS_Store
+
+# godot
 .import
+
+# rust
+target
+Cargo.lock
