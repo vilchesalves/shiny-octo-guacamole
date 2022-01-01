@@ -3,11 +3,16 @@ use gdnative::api::Area2D;
 
 #[derive(NativeClass)]
 #[inherit(Area2D)]
-pub struct PlayerController;
+pub struct PlayerController {
+    #[property(default = 400.0)]
+    speed: f32,
+}
 
 impl PlayerController {
     fn new(_owner: &Area2D) -> Self {
-        Self
+        Self {
+            speed: 400.0
+        }
     }
 }
 
