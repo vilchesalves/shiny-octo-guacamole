@@ -1,4 +1,4 @@
-use gdnative::api::{AnimatedSprite, Area2D};
+use gdnative::api::{AnimatedSprite, Area2D, CollisionShape2D};
 use gdnative::prelude::*;
 
 #[derive(NativeClass)]
@@ -22,7 +22,7 @@ impl PlayerController {
     fn register(builder: &ClassBuilder<Self>) {
         builder.add_signal(Signal {
             name: "hit",
-            args: &[]
+            args: &[],
         });
     }
 }
@@ -52,7 +52,7 @@ fn get_direction(input: &Input) -> Vector2 {
     }
 }
 
-fn move_owner(owner: &Area2D, direction_delta: Vector2, limit: Size2) {
+fn move_owner(owner: &Area2D, direction_delta: &Vector2, limit: &Size2) {
     let global_position = owner.global_position();
     let position = global_position + direction_delta;
 
@@ -73,16 +73,41 @@ impl PlayerController {
     fn _process(&self, owner: &Area2D, delta: f32) {
         let direction = get_direction(Input::godot_singleton());
 
-        self.animate_sprite(owner, direction);
+        self.animate_sprite(owner, &direction);
 
         move_owner(
             owner,
-            direction * self.speed * delta,
-            self.screen_size.expect("screen size not defined"),
+            &(direction * self.speed * delta),
+            &self.screen_size.expect("screen size not defined"),
         );
     }
 
-    fn animate_sprite(&self, owner: &Node2D, direction: Vector2) {
+    #[export]
+    fn _on_player_body_entered(&self, owner: &Area2D) {
+        owner.hide();
+        owner.emit_signal("hit", &[]);
+
+        unsafe {
+            owner
+                .get_node_as::<CollisionShape2D>("CollisionShape2D")
+                .expect("couldn't find node.")
+        }
+        .set_deferred("disabled", true);
+    }
+
+    #[export]
+    fn start(&self, owner: &Area2D) {
+        owner.set_global_position(Vector2::new(0.0, 0.0));
+        owner.show();
+        unsafe {
+            owner
+                .get_node_as::<CollisionShape2D>("CollisionShape2D")
+                .expect("couldn't find node.")
+        }
+        .set_deferred("disabled", true);
+    }
+
+    fn animate_sprite(&self, owner: &Area2D, direction: &Vector2) {
         let sprite = unsafe { owner.get_node_as::<AnimatedSprite>("AnimatedSprite") };
         let sprite = sprite.expect("couldn't locate sprite");
 
