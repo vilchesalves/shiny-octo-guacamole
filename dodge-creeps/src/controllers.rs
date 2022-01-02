@@ -19,6 +19,41 @@ impl PlayerController {
     }
 }
 
+fn get_direction(input: &Input) -> Vector2 {
+    let mut direction = Vector2::new(0.0, 0.0);
+
+    if input.is_action_pressed(GodotString::from_str("ui_up")) {
+        direction.y -= 1.0;
+    }
+
+    if input.is_action_pressed(GodotString::from_str("ui_right")) {
+        direction.x += 1.0;
+    }
+
+    if input.is_action_pressed(GodotString::from_str("ui_down")) {
+        direction.y += 1.0;
+    }
+
+    if input.is_action_pressed(GodotString::from_str("ui_left")) {
+        direction.x -= 1.0;
+    }
+
+    match direction.length() == 0.0 {
+        false => direction.normalize(),
+        true => direction,
+    }
+}
+
+fn move_owner(owner: &Area2D, direction_delta: Vector2, limit: Size2) {
+    let global_position = owner.global_position();
+    let position = global_position + direction_delta;
+
+    owner.set_global_position(Vector2::new(
+        position.x.max(0.0).min(limit.width),
+        position.y.max(0.0).min(limit.height),
+    ));
+}
+
 #[methods]
 impl PlayerController {
     #[export]
@@ -28,46 +63,12 @@ impl PlayerController {
 
     #[export]
     fn _process(&self, owner: &Area2D, delta: f32) {
-        let input = Input::godot_singleton();
+        let direction = get_direction(Input::godot_singleton());
 
-        let mut velocity = Vector2::new(0.0, 0.0);
-
-        if input.is_action_pressed(GodotString::from_str("ui_up")) {
-            velocity.y -= 1.0;
-        }
-
-        if input.is_action_pressed(GodotString::from_str("ui_right")) {
-            velocity.x += 1.0;
-        }
-
-        if input.is_action_pressed(GodotString::from_str("ui_down")) {
-            velocity.y += 1.0;
-        }
-
-        if input.is_action_pressed(GodotString::from_str("ui_left")) {
-            velocity.x -= 1.0;
-        }
-
-        if velocity.length() == 0.0 {
-            return;
-        }
-
-        velocity = velocity.normalize() * self.speed;
-
-        let global_position = owner.global_position();
-        let position_delta = velocity * delta;
-        let position = global_position + position_delta;
-
-        match self.screen_size {
-            Some(s) => {
-                owner.set_global_position(Vector2::new(
-                    position.x.max(0.0).min(s.width),
-                    position.y.max(0.0).min(s.height),
-                ));
-            }
-            None => {
-                godot_print!("screen is not defined");
-            }
-        }
+        move_owner(
+            owner,
+            direction * self.speed * delta,
+            self.screen_size.expect("screen size not defined"),
+        );
     }
 }
