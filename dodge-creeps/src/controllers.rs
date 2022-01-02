@@ -1,4 +1,4 @@
-use gdnative::api::Area2D;
+use gdnative::api::{AnimatedSprite, Area2D};
 use gdnative::prelude::*;
 
 #[derive(NativeClass)]
@@ -65,10 +65,28 @@ impl PlayerController {
     fn _process(&self, owner: &Area2D, delta: f32) {
         let direction = get_direction(Input::godot_singleton());
 
+        self.animate_sprite(owner, direction);
+
         move_owner(
             owner,
             direction * self.speed * delta,
             self.screen_size.expect("screen size not defined"),
         );
+    }
+
+    fn animate_sprite(&self, owner: &Node2D, direction: Vector2) {
+        let sprite = unsafe { owner.get_node_as::<AnimatedSprite>("AnimatedSprite") };
+        let sprite = sprite.expect("couldn't locate sprite");
+
+        if direction.length() > 0.0 {
+            sprite.set_animation(if direction.x == 0.0 { "up" } else { "walk" });
+            sprite.play("", false);
+        } else {
+            sprite.stop();
+        }
+
+        sprite.set_flip_h(direction.x < 0.0);
+        sprite.set_flip_v(direction.y > 0.0);
+
     }
 }
