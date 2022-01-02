@@ -3,6 +3,7 @@ use gdnative::prelude::*;
 
 #[derive(NativeClass)]
 #[inherit(Area2D)]
+#[register_with(Self::register)]
 pub struct PlayerController {
     screen_size: Option<Size2>,
 
@@ -16,6 +17,13 @@ impl PlayerController {
             screen_size: None,
             speed: 400.0,
         }
+    }
+
+    fn register(builder: &ClassBuilder<Self>) {
+        builder.add_signal(Signal {
+            name: "hit",
+            args: &[]
+        });
     }
 }
 
@@ -87,6 +95,5 @@ impl PlayerController {
 
         sprite.set_flip_h(direction.x < 0.0);
         sprite.set_flip_v(direction.y > 0.0);
-
     }
 }
