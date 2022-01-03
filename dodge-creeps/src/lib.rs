@@ -6,6 +6,7 @@ mod controllers;
 fn init(handle: InitHandle) {
     handle.add_class::<controllers::PlayerController>();
     handle.add_class::<controllers::Mob>();
+    handle.add_class::<controllers::Main>();
 }
 
 // Macro that creates the entry-points of the dynamic library.
