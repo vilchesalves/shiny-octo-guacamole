@@ -1,20 +1,50 @@
-use gdnative::prelude::*;
-use gdnative::api::RigidBody2D;
+use gdnative::{
+    api::{AnimatedSprite, RigidBody2D},
+    prelude::*,
+};
+use rand::Rng;
 
 #[derive(NativeClass)]
 #[inherit(RigidBody2D)]
-pub struct Mob;
+pub struct Mob {
+    #[property(default = 150.0)]
+    min_speed: f32,
+    #[property(default = 250.0)]
+    max_speed: f32,
+}
 
 impl Mob {
     fn new(_owner: &RigidBody2D) -> Self {
-        Self
+        Self {
+            min_speed: 150.0,
+            max_speed: 250.0,
+        }
     }
 }
 
 #[methods]
 impl Mob {
     #[export]
-    fn _ready(&self, _owner: TRef<RigidBody2D>) {
-        godot_print!("A Mob is ready");
+    fn _ready(&self, owner: &RigidBody2D) {
+        Mob::randomize_sprite(unsafe {
+            owner
+                .get_node_as::<AnimatedSprite>("AnimatedSprite")
+                .expect("couldn't get sprite")
+                .as_ref()
+        });
+    }
+
+    fn randomize_sprite(animated_sprite: &AnimatedSprite) {
+        let mut rng = rand::thread_rng();
+        let available_animations = unsafe {
+            animated_sprite
+                .sprite_frames()
+                .expect("sprite frames failed")
+                .assume_safe()
+                .get_animation_names()
+        };
+        let chosen_animation =
+            available_animations.get(rng.gen_range(0..available_animations.len()));
+        animated_sprite.set_animation(chosen_animation);
     }
 }
