@@ -96,15 +96,15 @@ impl PlayerController {
     }
 
     #[export]
-    fn start(&self, owner: &Area2D) {
-        owner.set_global_position(Vector2::new(0.0, 0.0));
+    pub fn start(&self, owner: &Area2D, start_position: Vector2) {
+        owner.set_global_position(start_position);
         owner.show();
         unsafe {
             owner
                 .get_node_as::<CollisionShape2D>("CollisionShape2D")
                 .expect("couldn't find node.")
         }
-        .set_deferred("disabled", true);
+        .set_deferred("disabled", false);
     }
 
     fn animate_sprite(&self, owner: &Area2D, direction: &Vector2) {
