@@ -1,5 +1,7 @@
-use gdnative::api::{Node, Position2D};
-use gdnative::prelude::*;
+use gdnative::{
+    api::{PathFollow2D, Position2D},
+    prelude::*,
+};
 
 use crate::controllers::player;
 
@@ -87,5 +89,38 @@ impl Main {
                 .expect("couldn't get mob timer")
         };
         mob_timer.stop();
+    }
+
+    #[export]
+    fn _on_starttimer_timeout(&self, owner: &Node) {
+        let score_timer = unsafe {
+            owner
+                .get_node_as::<Timer>("ScoreTimer")
+                .expect("couldn't get score timer")
+        };
+        score_timer.start(0.0);
+
+        let mob_timer = unsafe {
+            owner
+                .get_node_as::<Timer>("MobTimer")
+                .expect("couldn't get mob timer")
+        };
+        mob_timer.start(0.0);
+    }
+
+    #[export]
+    fn _on_scoretimer_timeout(&mut self, _owner: &Node) {
+        self.score += 1;
+    }
+
+    #[export]
+    fn _on_mobtimer_timeout(&self, owner: &Node) {
+        let spawn = unsafe {
+            owner
+                .get_node_as::<PathFollow2D>("MobPath/MobSpawnLocation")
+                .expect("couldn't get spawn")
+        };
+
+        spawn.set_offset(rand::random());
     }
 }
