@@ -6,7 +6,7 @@ use gdnative::{
 };
 use rand::Rng;
 
-use super::{Mob, PlayerController};
+use super::PlayerController;
 
 #[derive(NativeClass)]
 #[inherit(Node)]
@@ -38,6 +38,54 @@ fn connect_internal_scenes(owner: &Node) {
     player
         .connect("hit", target, "game_over", VariantArray::new_shared(), 0)
         .expect("couldn't connect hit");
+
+    let start_timer = unsafe {
+        owner
+            .get_node_as::<Timer>("StartTimer")
+            .expect("couldn't find start timer")
+    };
+
+    start_timer
+        .connect(
+            "timeout",
+            target,
+            "_on_starttimer_timeout",
+            VariantArray::new_shared(),
+            0,
+        )
+        .expect("couldn't connect timeout");
+
+    let score_timer = unsafe {
+        owner
+            .get_node_as::<Timer>("ScoreTimer")
+            .expect("couldn't get score timer")
+    };
+
+    score_timer
+        .connect(
+            "timeout",
+            target,
+            "_on_scoretimer_timeout",
+            VariantArray::new_shared(),
+            0,
+        )
+        .expect("couldn't connect timeout");
+
+    let mob_timer = unsafe {
+        owner
+            .get_node_as::<Timer>("MobTimer")
+            .expect("couldn't get mob timer")
+    };
+
+    mob_timer
+        .connect(
+            "timeout",
+            target,
+            "_on_mobtimer_timeout",
+            VariantArray::new_shared(),
+            0,
+        )
+        .expect("couldn't connect timeout");
 }
 
 #[methods]
@@ -48,8 +96,8 @@ impl Main {
         self.new_game(owner);
     }
 
+    #[export]
     fn new_game(&mut self, owner: &Node) {
-        godot_print!("new game");
         self.score = 0;
 
         let player = unsafe {
@@ -97,7 +145,6 @@ impl Main {
 
     #[export]
     fn _on_starttimer_timeout(&self, owner: &Node) {
-        godot_print!("starttimer timeout");
         let score_timer = unsafe {
             owner
                 .get_node_as::<Timer>("ScoreTimer")
@@ -129,14 +176,19 @@ impl Main {
 
         mob_spawn_location.set_offset(rand::random());
 
+        godot_print!("1");
+
         // create mob instance
         let mob = unsafe { &self.mob.assume_safe() };
+        godot_print!("2");
         let mob = mob
             .instance(PackedScene::GEN_EDIT_STATE_DISABLED)
             .expect("couldn't instance mob.");
-        let mob = unsafe { mob.assume_safe() }
+        godot_print!("3");
+        let mob = unsafe { mob.assume_unique() }
             .cast::<RigidBody2D>()
             .expect("couldn't cast to RigidBody2D");
+        godot_print!("4");
 
         let mut rng = rand::thread_rng();
 
@@ -147,8 +199,6 @@ impl Main {
                 + rng.gen_range((-PI / 4.0)..(PI / 4.0)), // randomized
         );
         mob.set_linear_velocity(Vector2::new(1.0, 0.0));
-
-        godot_print!("mob timerout!");
 
         owner.add_child(mob, false);
     }
