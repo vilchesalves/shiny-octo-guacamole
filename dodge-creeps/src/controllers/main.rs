@@ -1,9 +1,12 @@
+use std::f64::consts::PI;
+
 use gdnative::{
-    api::{PathFollow2D, Position2D},
+    api::{PathFollow2D, Position2D, RigidBody2D},
     prelude::*,
 };
+use rand::Rng;
 
-use crate::controllers::player;
+use super::{Mob, PlayerController};
 
 #[derive(NativeClass)]
 #[inherit(Node)]
@@ -23,7 +26,7 @@ impl Main {
     }
 }
 
-fn connect_player(owner: &Node) {
+fn connect_internal_scenes(owner: &Node) {
     let player = unsafe {
         owner
             .get_node_as::<Node2D>("Player")
@@ -40,17 +43,18 @@ fn connect_player(owner: &Node) {
 #[methods]
 impl Main {
     #[export]
-    fn _ready(&self, owner: &Node) {
-        connect_player(owner);
+    fn _ready(&mut self, owner: &Node) {
+        connect_internal_scenes(owner);
+        self.new_game(owner);
     }
 
-    #[export]
     fn new_game(&mut self, owner: &Node) {
+        godot_print!("new game");
         self.score = 0;
 
         let player = unsafe {
             owner
-                .get_node_as_instance::<player::PlayerController>("Player")
+                .get_node_as_instance::<PlayerController>("Player")
                 .expect("couldn't find player")
         };
         let start_position = unsafe {
@@ -93,6 +97,7 @@ impl Main {
 
     #[export]
     fn _on_starttimer_timeout(&self, owner: &Node) {
+        godot_print!("starttimer timeout");
         let score_timer = unsafe {
             owner
                 .get_node_as::<Timer>("ScoreTimer")
@@ -115,12 +120,36 @@ impl Main {
 
     #[export]
     fn _on_mobtimer_timeout(&self, owner: &Node) {
-        let spawn = unsafe {
+        // set spawn offset
+        let mob_spawn_location = unsafe {
             owner
                 .get_node_as::<PathFollow2D>("MobPath/MobSpawnLocation")
                 .expect("couldn't get spawn")
         };
 
-        spawn.set_offset(rand::random());
+        mob_spawn_location.set_offset(rand::random());
+
+        // create mob instance
+        let mob = unsafe { &self.mob.assume_safe() };
+        let mob = mob
+            .instance(PackedScene::GEN_EDIT_STATE_DISABLED)
+            .expect("couldn't instance mob.");
+        let mob = unsafe { mob.assume_safe() }
+            .cast::<RigidBody2D>()
+            .expect("couldn't cast to RigidBody2D");
+
+        let mut rng = rand::thread_rng();
+
+        mob.set_position(mob_spawn_location.position());
+        mob.set_rotation(
+            mob_spawn_location.rotation() // path rotation
+                + PI / 2.0 // perpendicular
+                + rng.gen_range((-PI / 4.0)..(PI / 4.0)), // randomized
+        );
+        mob.set_linear_velocity(Vector2::new(1.0, 0.0));
+
+        godot_print!("mob timerout!");
+
+        owner.add_child(mob, false);
     }
 }
