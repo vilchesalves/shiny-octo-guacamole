@@ -176,22 +176,17 @@ impl Main {
 
         mob_spawn_location.set_offset(rand::random());
 
-        godot_print!("1");
-
         // create mob instance
         let mob = unsafe { &self.mob.assume_safe() };
-        godot_print!("2");
         let mob = mob
             .instance(PackedScene::GEN_EDIT_STATE_DISABLED)
             .expect("couldn't instance mob.");
-        godot_print!("3");
         let mob = unsafe { mob.assume_unique() }
             .cast::<RigidBody2D>()
             .expect("couldn't cast to RigidBody2D");
-        godot_print!("4");
 
+        // set mob momentum
         let mut rng = rand::thread_rng();
-
         mob.set_position(mob_spawn_location.position());
         mob.set_rotation(
             mob_spawn_location.rotation() // path rotation
@@ -200,6 +195,7 @@ impl Main {
         );
         mob.set_linear_velocity(Vector2::new(1.0, 0.0));
 
+        // append mob to main scene
         owner.add_child(mob, false);
     }
 }
