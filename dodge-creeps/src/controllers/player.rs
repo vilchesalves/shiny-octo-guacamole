@@ -1,4 +1,4 @@
-use gdnative::api::{AnimatedSprite, Area2D, CollisionShape2D};
+use gdnative::api::{AnimatedSprite, Area2D, CollisionShape2D, RigidBody2D};
 use gdnative::prelude::*;
 
 #[derive(NativeClass)]
@@ -65,8 +65,18 @@ fn move_owner(owner: &Area2D, direction_delta: &Vector2, limit: &Size2) {
 #[methods]
 impl PlayerController {
     #[export]
-    fn _ready(&mut self, owner: &Area2D) {
+    fn _ready(&mut self, owner: TRef<Area2D>) {
         self.screen_size = Some(owner.get_viewport_rect().size);
+
+        owner
+            .connect(
+                "body_entered",
+                owner,
+                "_on_player_body_entered",
+                VariantArray::new_shared(),
+                0,
+            )
+            .expect("Failed to connect");
     }
 
     #[export]
@@ -83,7 +93,7 @@ impl PlayerController {
     }
 
     #[export]
-    fn _on_player_body_entered(&self, owner: &Area2D) {
+    fn _on_player_body_entered(&self, owner: &Area2D, _body: Ref<RigidBody2D>) {
         owner.hide();
         owner.emit_signal("hit", &[]);
 
