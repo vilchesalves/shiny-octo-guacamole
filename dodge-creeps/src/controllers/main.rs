@@ -1,12 +1,11 @@
 use std::f64::consts::PI;
 
+use crate::controllers::PlayerController;
 use gdnative::{
     api::{PathFollow2D, Position2D, RigidBody2D},
     prelude::*,
 };
 use rand::Rng;
-
-use super::{Mob, PlayerController};
 
 mod services;
 
@@ -131,7 +130,7 @@ impl Main {
         let mob = unsafe { mob.assume_unique() }
             .cast::<RigidBody2D>()
             .expect("couldn't cast to RigidBody2D");
-        let (mob, min_speed, max_speed) = get_mob_speeds(mob);
+        let (mob, min_speed, max_speed) = services::get_mob_speeds(mob);
 
         // set mob momentum
         let mut rng = rand::thread_rng();
@@ -146,20 +145,12 @@ impl Main {
                 + rng.gen_range((-PI / 4.0)..(PI / 4.0)), // randomized
         );
 
-        mob.set_linear_velocity(Vector2::new(rng.gen_range(min_speed..max_speed), rng.gen_range(min_speed..max_speed)));
-        
+        mob.set_linear_velocity(Vector2::new(
+            rng.gen_range(min_speed..max_speed),
+            rng.gen_range(min_speed..max_speed),
+        ));
 
         // append mob to main scene
         owner.add_child(mob, false);
     }
-}
-
-fn get_mob_speeds(mob: Ref<RigidBody2D, Unique>) -> (Ref<RigidBody2D, Unique>, f32, f32) {
-    let instance = mob.cast_instance::<Mob>().expect("couldn't cast instance");
-
-    let (min_speed, max_speed) = instance
-        .map(|m, _m_owner| (m.min_speed, m.max_speed))
-        .expect("couldn't map over instance");
-
-    (instance.into_base(), min_speed, max_speed)
 }

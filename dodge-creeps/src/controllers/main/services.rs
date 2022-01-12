@@ -1,4 +1,6 @@
-use gdnative::prelude::*;
+use gdnative::{prelude::*, api::RigidBody2D};
+
+use crate::controllers::Mob;
 
 pub fn connect_internal_scenes(owner: &Node) {
     let player = unsafe {
@@ -60,4 +62,14 @@ pub fn connect_internal_scenes(owner: &Node) {
             0,
         )
         .expect("couldn't connect timeout");
+}
+
+pub fn get_mob_speeds(mob: Ref<RigidBody2D, Unique>) -> (Ref<RigidBody2D, Unique>, f32, f32) {
+    let instance = mob.cast_instance::<Mob>().expect("couldn't cast instance");
+
+    let (min_speed, max_speed) = instance
+        .map(|m, _m_owner| (m.min_speed, m.max_speed))
+        .expect("couldn't map over instance");
+
+    (instance.into_base(), min_speed, max_speed)
 }
