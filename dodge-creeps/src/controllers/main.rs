@@ -8,7 +8,7 @@ use rand::Rng;
 
 use super::{Mob, PlayerController};
 
-mod main;
+mod services;
 
 #[derive(NativeClass)]
 #[inherit(Node)]
@@ -36,7 +36,7 @@ impl Main {
 impl Main {
     #[export]
     fn _ready(&mut self, owner: &Node) {
-        main::connect_internal_scenes(owner);
+        services::connect_internal_scenes(owner);
         self.new_game(owner);
     }
 
