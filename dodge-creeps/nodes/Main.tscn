@@ -31,4 +31,3 @@ position = Vector2( 240, 450 )
 curve = SubResource( 1 )
 
 [node name="MobSpawnLocation" type="PathFollow2D" parent="MobPath"]
-position = Vector2( 1, 0 )

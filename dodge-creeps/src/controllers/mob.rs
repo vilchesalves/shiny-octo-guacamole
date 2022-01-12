@@ -8,9 +8,9 @@ use rand::Rng;
 #[inherit(RigidBody2D)]
 pub struct Mob {
     #[property(default = 150.0)]
-    min_speed: f32,
+    pub min_speed: f32,
     #[property(default = 250.0)]
-    max_speed: f32,
+    pub max_speed: f32,
 }
 
 impl Mob {

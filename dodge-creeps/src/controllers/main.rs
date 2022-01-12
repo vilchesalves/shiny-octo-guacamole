@@ -6,7 +6,9 @@ use gdnative::{
 };
 use rand::Rng;
 
-use super::PlayerController;
+use super::{Mob, PlayerController};
+
+mod main;
 
 #[derive(NativeClass)]
 #[inherit(Node)]
@@ -24,81 +26,23 @@ impl Main {
             score: 0,
         }
     }
-}
 
-fn connect_internal_scenes(owner: &Node) {
-    let player = unsafe {
-        owner
-            .get_node_as::<Node2D>("Player")
-            .expect("couldn't get player node")
-    };
-
-    let target = unsafe { owner.get_node_as::<Node>(".").expect("couldn't get target") };
-
-    player
-        .connect("hit", target, "game_over", VariantArray::new_shared(), 0)
-        .expect("couldn't connect hit");
-
-    let start_timer = unsafe {
-        owner
-            .get_node_as::<Timer>("StartTimer")
-            .expect("couldn't find start timer")
-    };
-
-    start_timer
-        .connect(
-            "timeout",
-            target,
-            "_on_starttimer_timeout",
-            VariantArray::new_shared(),
-            0,
-        )
-        .expect("couldn't connect timeout");
-
-    let score_timer = unsafe {
-        owner
-            .get_node_as::<Timer>("ScoreTimer")
-            .expect("couldn't get score timer")
-    };
-
-    score_timer
-        .connect(
-            "timeout",
-            target,
-            "_on_scoretimer_timeout",
-            VariantArray::new_shared(),
-            0,
-        )
-        .expect("couldn't connect timeout");
-
-    let mob_timer = unsafe {
-        owner
-            .get_node_as::<Timer>("MobTimer")
-            .expect("couldn't get mob timer")
-    };
-
-    mob_timer
-        .connect(
-            "timeout",
-            target,
-            "_on_mobtimer_timeout",
-            VariantArray::new_shared(),
-            0,
-        )
-        .expect("couldn't connect timeout");
+    fn reset_score(&mut self) {
+        self.score = 0;
+    }
 }
 
 #[methods]
 impl Main {
     #[export]
     fn _ready(&mut self, owner: &Node) {
-        connect_internal_scenes(owner);
+        main::connect_internal_scenes(owner);
         self.new_game(owner);
     }
 
     #[export]
     fn new_game(&mut self, owner: &Node) {
-        self.score = 0;
+        self.reset_score();
 
         let player = unsafe {
             owner
@@ -118,9 +62,8 @@ impl Main {
 
         player
             .map(|c, c_owner| {
-                c.start(&c_owner.as_ref(), start_position.position());
+                c.start(c_owner.as_ref(), start_position.position());
             })
-            .ok()
             .expect("couldn't find player class");
 
         start_timer.start(0.0);
@@ -174,7 +117,11 @@ impl Main {
                 .expect("couldn't get spawn")
         };
 
-        mob_spawn_location.set_offset(rand::random());
+        let r = rand::random();
+
+        godot_print!("random: {}", r);
+
+        mob_spawn_location.set_offset(r);
 
         // create mob instance
         let mob = unsafe { &self.mob.assume_safe() };
@@ -184,18 +131,35 @@ impl Main {
         let mob = unsafe { mob.assume_unique() }
             .cast::<RigidBody2D>()
             .expect("couldn't cast to RigidBody2D");
+        let (mob, min_speed, max_speed) = get_mob_speeds(mob);
 
         // set mob momentum
         let mut rng = rand::thread_rng();
-        mob.set_position(mob_spawn_location.position());
+
+        let p = mob_spawn_location.position();
+        godot_print!("pos: {:?}", p);
+
+        mob.set_position(p);
         mob.set_rotation(
             mob_spawn_location.rotation() // path rotation
                 + PI / 2.0 // perpendicular
                 + rng.gen_range((-PI / 4.0)..(PI / 4.0)), // randomized
         );
-        mob.set_linear_velocity(Vector2::new(1.0, 0.0));
+
+        mob.set_linear_velocity(Vector2::new(rng.gen_range(min_speed..max_speed), rng.gen_range(min_speed..max_speed)));
+        
 
         // append mob to main scene
         owner.add_child(mob, false);
     }
+}
+
+fn get_mob_speeds(mob: Ref<RigidBody2D, Unique>) -> (Ref<RigidBody2D, Unique>, f32, f32) {
+    let instance = mob.cast_instance::<Mob>().expect("couldn't cast instance");
+
+    let (min_speed, max_speed) = instance
+        .map(|m, _m_owner| (m.min_speed, m.max_speed))
+        .expect("couldn't map over instance");
+
+    (instance.into_base(), min_speed, max_speed)
 }
