@@ -116,12 +116,6 @@ impl Main {
                 .expect("couldn't get spawn")
         };
 
-        let r = rand::random();
-
-        godot_print!("random: {}", r);
-
-        mob_spawn_location.set_offset(r);
-
         // create mob instance
         let mob = unsafe { &self.mob.assume_safe() };
         let mob = mob
@@ -134,19 +128,16 @@ impl Main {
 
         // set mob momentum
         let mut rng = rand::thread_rng();
+        mob_spawn_location.set_unit_offset(rng.gen());
+        mob.set_position(mob_spawn_location.position());
 
-        let p = mob_spawn_location.position();
-        godot_print!("pos: {:?}", p);
+        let rotation = mob_spawn_location.rotation() // path rotation
+            + PI / 2.0 // perpendicular
+            + rng.gen_range((-PI / 4.0)..(PI / 4.0)); // randomized
 
-        mob.set_position(p);
-        mob.set_rotation(
-            mob_spawn_location.rotation() // path rotation
-                + PI / 2.0 // perpendicular
-                + rng.gen_range((-PI / 4.0)..(PI / 4.0)), // randomized
-        );
-
-        mob.set_linear_velocity(Vector2::new(
-            rng.gen_range(min_speed..max_speed),
+        mob.set_rotation(rotation);
+        mob.set_linear_velocity(Vector2::from_angle_and_length(
+            Angle::radians(rotation as f32),
             rng.gen_range(min_speed..max_speed),
         ));
 
